@@ -1,0 +1,21 @@
+Source: zstd
+Section: admin
+Priority: optional
+Maintainer: DEBFULLNAME <DEBEMAIL>
+Build-Depends: debhelper (>= 7.0.50),
+Standards-Version: 3.9.3
+Homepage: https://github.com/facebook/zstd
+
+
+Package: libzstd
+Architecture: amd64
+Depends: ${misc:Depends}, ${shlibs:Depends},
+Description: zstd library
+ Zstandard - Fast real-time compression algorithm http://www.zstd.net
+
+
+Package: zstd
+Architecture: amd64
+Depends: ${misc:Depends}, libzstd (= ${source:Version})
+Description: zstd binary, include pzstd
+ Zstandard - Fast real-time compression algorithm http://www.zstd.net

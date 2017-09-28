@@ -3,50 +3,36 @@ FROM ubuntu:trusty-20170119
 # Required system packages
 RUN apt-get update \
     && apt-get install -y \
-        wget \
-        unzip \
-        build-essential \
-        libreadline6-dev \
-        ruby-dev \
-        libncurses5-dev \
-        perl \
-        libpcre3-dev \
-        libssl-dev \
-    && gem install fpm
+        wget unzip build-essential \
+        libpcre3-dev libssl-dev liblzma-dev liblz4-dev \
+        devscripts debhelper
 
-RUN mkdir -p /build/root
+RUN mkdir -p /build/src
 WORKDIR /build
+COPY debian /build/src/debian
 
-ARG DEB_VERSION
-ARG DEB_PACKAGE
+ARG DEBVERSION
+ARG DEBFULLNAME
+ARG DEBEMAIL
+
+ENV DEBFULLNAME $DEBFULLNAME
+ENV DEBEMAIL $DEBEMAIL
 
 # Download packages
-RUN wget -O zstd-$DEB_VERSION.tar.gz https://github.com/facebook/zstd/archive/v$DEB_VERSION.tar.gz \
-    && tar xfz zstd-$DEB_VERSION.tar.gz
+RUN wget -O /zstd_$DEBVERSION.tar.gz https://github.com/facebook/zstd/archive/v$DEBVERSION.tar.gz \
+    && tar xfz /zstd_$DEBVERSION.tar.gz
 
 # Compile and install
-RUN cd /build/zstd-$DEB_VERSION \
-    && make install DESTDIR=/build/root
+RUN cd /build/zstd-$DEBVERSION \
+    && make install DESTDIR=/build/src
+RUN cd /build/zstd-$DEBVERSION/contrib/pzstd \
+    && make install DESTDIR=/build/src
+WORKDIR /build/src
 
+RUN sed -i "s/DEBFULLNAME/$DEBFULLNAME/" /build/src/debian/control
+RUN sed -i "s/DEBEMAIL/$DEBEMAIL/" /build/src/debian/control
 # Build deb
-RUN fpm -s dir -t deb \
-    -n libzstd0 \
-    -v $DEB_VERSION-$DEB_PACKAGE \
-    -C /build/root \
-    -p libzstd0_VERSION_ARCH.deb \
-    --description 'a high performance web server and a reverse proxy server' \
-    --maintainer 'Phillipp Röll <phillipp.roell@trafficplex.de>' \
-    --deb-build-depends build-essential \
-    usr/local/lib usr/local/include
-
-# Build deb
-RUN fpm -s dir -t deb \
-    -n zstd \
-    -v $DEB_VERSION-$DEB_PACKAGE \
-    -C /build/root \
-    -p zstd_VERSION_ARCH.deb \
-    --depends "libzstd0 = $DEB_VERSION-$DEB_PACKAGE" \
-    --description 'a high performance web server and a reverse proxy server' \
-    --maintainer 'Phillipp Röll <phillipp.roell@trafficplex.de>' \
-    --deb-build-depends build-essential \
-    usr/local/bin usr/local/share
+RUN /usr/bin/dch --newversion=$DEBVERSION -D trusty "Debianization for $DEBVERSION"
+RUN debuild -us -uc
+RUN mkdir -p /build/artifacts
+RUN find /build -maxdepth 1 -type f -name "*$DEBVERSION*"|xargs -n1 -I _ mv -v _ /build/artifacts/
