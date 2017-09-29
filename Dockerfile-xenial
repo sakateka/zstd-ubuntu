@@ -1,4 +1,4 @@
-FROM ubuntu:trusty-20170119
+FROM ubuntu:xenial-20170915
 
 # Required system packages
 RUN apt-get update \
@@ -32,7 +32,7 @@ WORKDIR /build/src
 RUN sed -i "s/DEBFULLNAME/$DEBFULLNAME/" /build/src/debian/control
 RUN sed -i "s/DEBEMAIL/$DEBEMAIL/" /build/src/debian/control
 # Build deb
-RUN /usr/bin/dch --newversion=$DEBVERSION -D trusty "Debianization for $DEBVERSION"
+RUN /usr/bin/dch --newversion=$DEBVERSION -D xenial "Debianization for $DEBVERSION"
 RUN debuild -us -uc
 RUN mkdir -p /build/artifacts
 RUN find /build -maxdepth 1 -type f -name "*$DEBVERSION*"|xargs -n1 -I _ mv -v _ /build/artifacts/

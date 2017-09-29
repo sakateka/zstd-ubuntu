@@ -7,8 +7,14 @@ DEBEMAIL="$(git config --get user.email)"
 
 echo "Building $DEBVERSION.de"
 
-docker build --build-arg DEBVERSION=$DEBVERSION --build-arg DEBFULLNAME="$DEBFULLNAME" --build-arg DEBEMAIL="$DEBEMAIL" -t zstd-bundle-deb . ||\
-    echo "Failed to build image"
-CONTAINER=$(docker create zstd-bundle-deb)
-docker cp $CONTAINER:/build/artifacts ./
-docker rm $CONTAINER
+for dist in precise trusty xenial; do
+    docker build -f Dockerfile-$dist \
+                 --build-arg DEBVERSION=$DEBVERSION \
+                 --build-arg DEBFULLNAME="$DEBFULLNAME" \
+                 --build-arg DEBEMAIL="$DEBEMAIL" \
+         -t zstd-bundle-deb-$dist . || echo "Failed to build image"
+    CONTAINER=$(docker create zstd-bundle-deb-$dist)
+    mkdir -p $dist
+    docker cp $CONTAINER:/build/artifacts ./$dist/
+    docker rm $CONTAINER
+done
