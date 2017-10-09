@@ -7,7 +7,7 @@ DEBEMAIL="$(git config --get user.email)"
 
 echo "Building $DEBVERSION.de"
 
-for dist in precise trusty xenial; do
+for dist in xenial trusty precise lucid; do
     docker build -f Dockerfile-$dist \
                  --build-arg DEBVERSION=$DEBVERSION \
                  --build-arg DEBFULLNAME="$DEBFULLNAME" \
