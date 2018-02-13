@@ -1,20 +1,24 @@
 #! /bin/bash
 set -eux
 
-DEBVERSION=1.3.1
+DEBVERSION=1.3.3
 DEBFULLNAME="$(git config --get user.name)"
 DEBEMAIL="$(git config --get user.email)"
 
-echo "Building $DEBVERSION.de"
+echo -e "\e[1;32mBuilding zstd $DEBVERSION\e[1;0m"
 
 for dist in xenial trusty precise lucid; do
+    echo -e "\e[1;33mBuilding for \e[1;34m$dist\e[1;0m"
     docker build -f Dockerfile-$dist \
                  --build-arg DEBVERSION=$DEBVERSION \
                  --build-arg DEBFULLNAME="$DEBFULLNAME" \
                  --build-arg DEBEMAIL="$DEBEMAIL" \
-         -t zstd-bundle-deb-$dist . || echo "Failed to build image"
+         -t zstd-bundle-deb-$dist . ||\
+         echo -e "\e[1;31mFailed to build image for $distc\e[0m"
     CONTAINER=$(docker create zstd-bundle-deb-$dist)
-    mkdir -p $dist
-    docker cp $CONTAINER:/build/artifacts ./$dist/
+    mkdir -p ./artifacts/$dist
+    docker cp $CONTAINER:/build/artifacts ./artifacts/$dist/
     docker rm $CONTAINER
+    mv artifacts/$dist/artifacts/* artifacts/$dist
+    rmdir -v artifacts/$dist/artifacts
 done

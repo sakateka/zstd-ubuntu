@@ -8,10 +8,12 @@ RUN apt-get update \
         wget unzip build-essential \
         libpcre3-dev libssl-dev liblzma-dev \
         devscripts debhelper
-RUN apt-get install software-properties-common python-software-properties -y && \
-    add-apt-repository ppa:ubuntu-toolchain-r/test -y && \
-    apt-get update && apt-get install gcc-5 g++-5 -y && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 100 --slave /usr/bin/g++ g++ /usr/bin/g++-5  && \
+
+RUN apt-get install software-properties-common python-software-properties -y
+RUN add-apt-repository ppa:nathan-renniewaldock/ppa
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test -y
+RUN apt-get update && apt-get install gcc-5 g++-5 liblz4-dev -y
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 100 --slave /usr/bin/g++ g++ /usr/bin/g++-5  && \
     update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.6 40 --slave /usr/bin/g++ g++ /usr/bin/g++-4.6  && \
     update-alternatives --config gcc
 
@@ -27,7 +29,8 @@ ENV DEBFULLNAME $DEBFULLNAME
 ENV DEBEMAIL $DEBEMAIL
 
 # Download packages
-RUN wget -O /zstd_$DEBVERSION.tar.gz https://github.com/facebook/zstd/archive/v$DEBVERSION.tar.gz \
+RUN wget --no-check-certificate -O /zstd_$DEBVERSION.tar.gz \
+    https://github.com/facebook/zstd/archive/v$DEBVERSION.tar.gz \
     && tar xfz /zstd_$DEBVERSION.tar.gz
 
 # Compile and install
