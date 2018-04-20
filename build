@@ -1,11 +1,15 @@
 #! /bin/bash
 set -eux
 
-DEBVERSION=1.3.3
+REPO_PREFIX="$1" # like "ubuntu-"
+
+DEBVERSION=1.3.4
 DEBFULLNAME="$(git config --get user.name)"
 DEBEMAIL="$(git config --get user.email)"
 
 echo -e "\e[1;32mBuilding zstd $DEBVERSION\e[1;0m"
+wget --no-check-certificate -O zstd_$DEBVERSION.tar.gz \
+    https://github.com/facebook/zstd/archive/v$DEBVERSION.tar.gz
 
 for dist in xenial trusty precise lucid; do
     echo -e "\e[1;33mBuilding for \e[1;34m$dist\e[1;0m"
@@ -14,11 +18,25 @@ for dist in xenial trusty precise lucid; do
                  --build-arg DEBFULLNAME="$DEBFULLNAME" \
                  --build-arg DEBEMAIL="$DEBEMAIL" \
          -t zstd-bundle-deb-$dist . ||\
-         echo -e "\e[1;31mFailed to build image for $distc\e[0m"
+         echo -e "\e[1;31mFailed to build image for $dist\e[0m"
     CONTAINER=$(docker create zstd-bundle-deb-$dist)
     mkdir -p ./artifacts/$dist
     docker cp $CONTAINER:/build/artifacts ./artifacts/$dist/
     docker rm $CONTAINER
     mv artifacts/$dist/artifacts/* artifacts/$dist
     rmdir -v artifacts/$dist/artifacts
+    pushd artifacts/$dist
+    debsign --debs-dir . zstd_${DEBVERSION}_amd64.changes  --re-sign
+    dpkg-deb --extract zstd_${DEBVERSION}_amd64.deb debian
+    zcat debian/usr/share/doc/zstd/changelog.gz  > debian/changelog
+    popd
+done
+
+for dist in xenial trusty precise lucid; do
+    pushd artifacts/$dist
+    read -p "`pwd`: Release zstd_$DEBVERSION to ${REPO_PREFIX}$dist? (y/N) "
+    if [[ "${REPLY,,}" =~ ^y ]]; then
+        debrelease --debs-dir . --to=${REPO_PREFIX}$dist
+    fi
+    popd
 done

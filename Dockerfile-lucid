@@ -27,10 +27,8 @@ ARG DEBEMAIL
 ENV DEBFULLNAME $DEBFULLNAME
 ENV DEBEMAIL $DEBEMAIL
 
-# Download packages
-RUN wget --no-check-certificate -O /zstd_$DEBVERSION.tar.gz \
-    https://github.com/facebook/zstd/archive/v$DEBVERSION.tar.gz \
-    && tar xfz /zstd_$DEBVERSION.tar.gz
+COPY zstd_$DEBVERSION.tar.gz /
+RUN tar xfz /zstd_$DEBVERSION.tar.gz
 
 # Compile and install
 RUN cd /build/zstd-$DEBVERSION \
