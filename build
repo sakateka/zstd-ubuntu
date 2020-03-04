@@ -3,7 +3,7 @@ set -eux
 
 REPO_PREFIX="$1" # like "ubuntu-"
 
-DEBVERSION=1.3.4
+DEBVERSION=1.4.4
 DEBFULLNAME="$(git config --get user.name)"
 DEBEMAIL="$(git config --get user.email)"
 
@@ -11,7 +11,7 @@ echo -e "\e[1;32mBuilding zstd $DEBVERSION\e[1;0m"
 wget --no-check-certificate -O zstd_$DEBVERSION.tar.gz \
     https://github.com/facebook/zstd/archive/v$DEBVERSION.tar.gz
 
-for dist in xenial trusty precise lucid; do
+for dist in xenial trusty; do
     echo -e "\e[1;33mBuilding for \e[1;34m$dist\e[1;0m"
     docker build -f Dockerfile-$dist \
                  --build-arg DEBVERSION=$DEBVERSION \
@@ -32,7 +32,7 @@ for dist in xenial trusty precise lucid; do
     popd
 done
 
-for dist in xenial trusty precise lucid; do
+for dist in xenial trusty; do
     pushd artifacts/$dist
     read -p "`pwd`: Release zstd_$DEBVERSION to ${REPO_PREFIX}$dist? (y/N) "
     if [[ "${REPLY,,}" =~ ^y ]]; then
